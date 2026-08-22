@@ -37,16 +37,17 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 .pin-shell{min-height:100dvh;display:grid;place-items:center;padding:1rem;background:var(--bg)}.lock-card{width:min(420px,100%);padding:1.1rem}.pin-logo{margin:0 auto .8rem}.pin-title{text-align:center;font-size:1.08rem;font-weight:800;letter-spacing:-.01em}.pin-sub{text-align:center;color:var(--muted);font-size:.83rem;margin:.25rem 0 1rem}.pin-dots{display:flex;justify-content:center;gap:.5rem;margin:.85rem 0 1rem}.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--pri);background:#fff}.dot.on{background:var(--pri)}.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}.pin-key{border:1px solid var(--line);border-radius:12px;background:#fff;padding:.95rem 0;font-weight:800;font-size:1rem}
 .footer{text-align:center;padding:1.75rem 1rem 2.1rem;font-weight:700}.footer a{color:inherit;-webkit-tap-highlight-color:transparent}
 
-/* STYLING KHUSUS KASIR CEPAT */
+/* STYLING KASIR CEPAT & TOTAL LANGSUNG */
 .quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;margin-bottom:.8rem}
 .quick-btn{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:.6rem .4rem;text-align:center;font-weight:700;cursor:pointer;transition:all .15s ease;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .quick-btn:active{transform:scale(.95);background:#e2e8f0}
 .quick-btn .q-name{font-size:.82rem;color:var(--text)}.quick-btn .q-price{font-size:.72rem;color:var(--muted)}
 .cart-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.75rem;margin-bottom:.8rem;min-height:60px}
 .cart-tag{display:inline-flex;align-items:center;gap:.4rem;background:var(--orbg);color:var(--or);padding:.25rem .5rem;border-radius:6px;font-size:.78rem;font-weight:800;margin:.2rem}
-.calc-screen{background:#111827;color:#fff;border-radius:12px;padding:1rem;text-align:center;margin-bottom:1rem}
-.calc-summary{font-size:.88rem;color:#9ca3af;margin-bottom:.4rem;word-break:break-word}
-.calc-total{font-size:1.8rem;font-weight:900;color:#34d399}
+.total-box{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:.8rem;margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:center}
+.total-label{font-size:.85rem;font-weight:700;color:var(--muted)}
+.total-value{font-size:1.3rem;font-weight:900;color:var(--ok)}
+.warn-box{background:var(--erbg);border:1px solid #fecaca;color:var(--er);padding:.6rem .8rem;border-radius:8px;font-size:.78rem;font-weight:700;margin-bottom:.8rem;display:none}
 
 @media (max-width:760px){.topin,.wrap{padding-left:.85rem;padding-right:.85rem}.actions{grid-template-columns:repeat(3,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bar,.two,.detailhead,.paybox{grid-template-columns:1fr}.itemin{grid-template-columns:58px minmax(0,1fr);gap:.75rem}.ph{width:58px;height:58px}.bigph{width:82px;height:82px}}
 @media (max-width:420px){.actions{grid-template-columns:1fr 1fr}.btn{padding:.72rem .8rem;font-size:.85rem}.sheet{padding:.95rem .9rem calc(.95rem + env(safe-area-inset-bottom))}}
@@ -75,7 +76,7 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 <main class="wrap">
   <div class="note" id="statusBox"><strong>Sistem Mandiri Aktif</strong><div class="mini" id="statusText">Pencatatan warung tersimpan aman di memori HP.</div></div>
   <div class="actions">
-    <button class="btn bg" onclick="openCatalog()">📋 Top Seller</button>
+    <button class="btn bg" onclick="openCatalog()">📋 Katalog</button>
     <button class="btn bg" onclick="openSettings()">Pengaturan</button>
     <button class="btn bg" onclick="shareSummary()">Ringkasan</button>
     <button class="btn bg" onclick="lockNow()">Kunci</button>
@@ -93,7 +94,7 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 </main>
 </div>
 
-<!-- MODAL TAMBAH/EDIT SISWA (TANPA CATATAN AWAL) -->
+<!-- MODAL TAMBAH/EDIT SISWA -->
 <div class="modal" id="mForm"><div class="sheet"><div class="handle"></div><div class="mh" id="formTitle">Tambah Siswa Baru</div><form class="form" id="formMain">
 <input type="file" accept="image/*" capture="environment" id="fotoCamera" hidden><input type="file" accept="image/*" id="fotoGallery" hidden>
 <div class="photo-row"><div class="photo-half"><div class="photo-box"><button type="button" class="btn bg photo-btn" onclick="pickCamera()">Ambil Foto</button><div class="hint" style="margin-top:.45rem">Buka kamera HP</div></div></div><div class="photo-half"><div class="photo-box"><button type="button" class="btn bg photo-btn" onclick="pickGallery()">Pilih Foto</button><div class="hint" style="margin-top:.45rem">Pilih dari galeri</div></div></div></div>
@@ -102,58 +103,49 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 <div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.5rem"><button type="button" class="btn bg" onclick="closeModal('mForm')">Batal</button><button type="submit" class="btn bp">Simpan & Buka Catatan</button></div>
 </form></div></div>
 
-<!-- MODAL KASIR CEPAT (TAMBAH CATATAN) -->
+<!-- MODAL KASIR CEPAT (TAMBAH CATATAN SELESAI DENGAN 1 STEP) -->
 <div class="modal" id="mAddLoan"><div class="sheet"><div class="handle"></div>
-  <div id="loanStep1">
-    <div class="mh">Tambah Catatan: <span id="loanStudentName" style="color:var(--pri)"></span></div>
-    <div class="small" style="margin-bottom:.8rem">Klik barang cepat di bawah ini berkali-kali sesuai jumlah pinjam:</div>
-    <div class="quick-grid" id="quickGrid"></div>
-    <div class="fg" style="margin-bottom:.8rem"><label>Atau barang unik / lainnya:</label>
-      <div class="two">
-        <input id="manualItemName" placeholder="Nama barang">
-        <input id="manualItemPrice" type="number" placeholder="Harga (Rp)">
-      </div>
-      <button type="button" class="btn bg" style="width:100%;margin-top:.4rem" onclick="addManualToCart()">+ Tambahkan Barang Unik</button>
+  <div class="mh">Tambah Catatan: <span id="loanStudentName" style="color:var(--pri)"></span></div>
+  <div class="small" style="margin-bottom:.8rem">Klik barang di bawah ini berkali-kali sesuai jumlah pinjam:</div>
+  <div class="quick-grid" id="quickGrid"></div>
+  <div class="fg" style="margin-bottom:.8rem"><label>Atau barang unik / lainnya:</label>
+    <div class="two">
+      <input id="manualItemName" placeholder="Nama barang">
+      <input id="manualItemPrice" type="number" placeholder="Harga (Rp)">
     </div>
-    <div class="fg"><label>Keranjang Barang Dipilih:</label>
-      <div class="cart-box" id="cartBox"><div class="hint" style="text-align:center">Belum ada barang dipilih. Klik tombol di atas!</div></div>
-    </div>
-    <div style="display:flex;gap:.55rem;margin-top:1rem">
-      <button type="button" class="btn bg" onclick="closeModal('mAddLoan')">Batal</button>
-      <button type="button" class="btn bp" style="flex:1" onclick="goToStep2()">Lanjut Konfirmasi ➔</button>
-    </div>
+    <button type="button" class="btn bg" style="width:100%;margin-top:.4rem" onclick="addManualToCart()">+ Tambahkan Barang Unik</button>
   </div>
-  <div id="loanStep2" class="hidden">
-    <div class="mh">Konfirmasi Total Catatan</div>
-    <div class="calc-screen">
-      <div class="calc-summary" id="calcSummary">-</div>
-      <div class="calc-total" id="calcTotalDisplay">Rp 0</div>
-    </div>
-    <div class="fg" style="margin-bottom:1rem"><label>Edit Total Nominal Jika Perlu (Rp):</label>
-      <input id="finalAmountInput" type="number" class="input" style="font-size:1.2rem;font-weight:800;text-align:center">
-    </div>
-    <div style="display:flex;gap:.55rem">
-      <button type="button" class="btn bg" onclick="goToStep1()">← Kembali Edit</button>
-      <button type="button" class="btn bp" style="flex:1" onclick="saveLoanFinal()">OK / Simpan Catatan</button>
-    </div>
+  <div class="fg"><label>Keranjang Barang Dipilih:</label>
+    <div class="cart-box" id="cartBox"><div class="hint" style="text-align:center">Belum ada barang dipilih. Klik tombol di atas!</div></div>
+  </div>
+  <div class="warn-box" id="limitWarnMsg"></div>
+  <div class="total-box">
+    <span class="total-label">Total Catatan:</span>
+    <span class="total-value" id="cartTotalDisplay">Rp 0</span>
+    <input type="hidden" id="finalAmountInput" value="0">
+  </div>
+  <div style="display:flex;gap:.55rem">
+    <button type="button" class="btn bg" onclick="closeModal('mAddLoan')">Batal</button>
+    <button type="button" class="btn bp" id="btnSaveLoan" style="flex:1" onclick="saveLoanFinal()">Simpan Catatan</button>
   </div>
 </div></div>
 
-<!-- MODAL KATALOG TOP SELLER -->
-<div class="modal" id="mCatalog"><div class="sheet"><div class="handle"></div><div class="mh">📋 Menu Barang Top Seller</div>
+<!-- MODAL KATALOG BARANG LENGKAP (DENGAN VARIAN UNTUK TERMUX AI) -->
+<div class="modal" id="mCatalog"><div class="sheet"><div class="handle"></div><div class="mh">📋 Katalog Barang Warung</div>
   <div class="sec" style="margin-bottom:1rem">
     <form class="form" id="catForm">
       <div class="two">
-        <div class="fg"><label>Nama Barang</label><input id="catName" placeholder="Contoh: Minuman 1000" required></div>
+        <div class="fg"><label>Nama Barang</label><input id="catName" placeholder="Contoh: Es Krim" required></div>
         <div class="fg"><label>Harga (Rp)</label><input id="catPrice" type="number" placeholder="1000" required></div>
       </div>
-      <button type="submit" class="btn bp">+ Tambah ke Menu Cepat</button>
+      <div class="fg"><label>Varian / Rasa (Pisahkan koma untuk AI Termux)</label><input id="catVariants" placeholder="Contoh: Coklat, Stroberi, Taro, Alpukat"></div>
+      <button type="submit" class="btn bp">+ Tambah ke Katalog</button>
     </form>
   </div>
-  <div class="mh" style="font-size:.95rem">Daftar Tombol Cepat:</div>
+  <div class="mh" style="font-size:.95rem">Daftar Barang Saat Ini:</div>
   <table class="tbl">
-    <thead><tr><th>Barang</th><th>Harga</th><th>Aksi</th></tr></thead>
-    <tbody id="catTable"><tr><td colspan="3">Belum ada barang di menu cepat</td></tr></tbody>
+    <thead><tr><th>Barang</th><th>Harga</th><th>Varian/Rasa</th><th>Aksi</th></tr></thead>
+    <tbody id="catTable"><tr><td colspan="4">Belum ada barang di katalog</td></tr></tbody>
   </table>
   <div style="margin-top:1rem"><button type="button" class="btn bg" onclick="closeModal('mCatalog')">Tutup</button></div>
 </div></div>
@@ -179,13 +171,13 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 <script>
 const STATE_KEY='main';
 let state=null, rows=[], catalog=[], settings={}, security={}, currentPhoto=null, editingId=null, currentId=null, enteredPin='', unlocked=false;
-let cartItems = {}; // Untuk menampung keranjang kasir cepat
+let cartItems = {};
 
 function defaultClasses(){return ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B','Lainnya']}
 function defaultSettings(){return {shopName:'Warung ZZ',limit:5000,maxDays:3,classes:defaultClasses(),theme:'orange'}}
 function defaultSecurity(){return {lockEnabled:false,pin:''}}
-function defaultCatalog(){return [{id:'1',name:'Minuman',price:1000},{id:'2',name:'Kue',price:1000},{id:'3',name:'Es Lilin',price:500}]}
-function defaultState(){return {settings:defaultSettings(),security:defaultSecurity(),items:[],catalog:defaultCatalog(),meta:{app:'CatatanWarung by MZW Digital',version:8,updatedAt:Date.now()}}}
+function defaultCatalog(){return [{id:'1',name:'Es Krim',price:1000,variants:'Coklat, Stroberi, Taro, Alpukat'},{id:'2',name:'Pop Ice',price:3000,variants:'Coklat, Vanilla, Mangga'},{id:'3',name:'Minuman',price:1000,variants:''}]}
+function defaultState(){return {settings:defaultSettings(),security:defaultSecurity(),items:[],catalog:defaultCatalog(),meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:Date.now()}}}
 
 function toast(msg){const t=document.getElementById('toast');t.innerHTML='<div>'+msg+'</div>';setTimeout(()=>t.innerHTML='',2400)}
 function esc(s){return String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
@@ -254,12 +246,12 @@ function normalizeImported(parsed){
     security:{lockEnabled:!!sec.lockEnabled,pin:String(sec.pin||'')},
     items:Array.isArray(parsed.items)?parsed.items:[],
     catalog:Array.isArray(parsed.catalog)?parsed.catalog:defaultCatalog(),
-    meta:{app:'CatatanWarung by MZW Digital',version:8,updatedAt:parsed.meta?.updatedAt||Date.now()}
+    meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:parsed.meta?.updatedAt||Date.now()}
   }
 }
 
 async function loadState(){try{const saved=await dbGet(STATE_KEY); state=saved?normalizeImported(saved):defaultState(); settings=state.settings; security=state.security; rows=Array.isArray(state.items)?state.items:[]; catalog=Array.isArray(state.catalog)?state.catalog:defaultCatalog();}catch(e){console.error(e); state=defaultState(); settings=state.settings; security=state.security; rows=[]; catalog=defaultCatalog();} syncSettingsUI(); populateClassSelects(); applyBrand(); render(); initLock()}
-async function saveState(){state={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:8,updatedAt:Date.now()}}; await dbSet(STATE_KEY,state)}
+async function saveState(){state={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:Date.now()}}; await dbSet(STATE_KEY,state)}
 async function persist(msg='Tersimpan'){await saveState();applyBrand();render(); if(msg) toast(msg)}
 function applyTheme(){const m={orange:['#c96b00','#a55600'],blue:['#2265d8','#184ba1'],green:['#2e8b57','#20633d'],purple:['#8257d7','#6240ab']}[settings.theme||'orange']; document.documentElement.style.setProperty('--pri',m[0]); document.documentElement.style.setProperty('--pri2',m[1])}
 
@@ -302,21 +294,22 @@ function render(){
 function openCatalog(){ renderCatalog(); openModal('mCatalog'); }
 function renderCatalog(){
   const tb = document.getElementById('catTable');
-  if(!catalog.length){ tb.innerHTML='<tr><td colspan="3" style="text-align:center">Belum ada tombol cepat</td></tr>'; return; }
-  tb.innerHTML = catalog.map(c=>`<tr><td><strong>${esc(c.name)}</strong></td><td>${rp(c.price)}</td><td><button class="btn bd" style="padding:.3rem .5rem;min-height:30px;font-size:.75rem" onclick="deleteCatalogItem('${c.id}')">Hapus</button></td></tr>`).join('');
+  if(!catalog.length){ tb.innerHTML='<tr><td colspan="4" style="text-align:center">Belum ada barang di katalog</td></tr>'; return; }
+  tb.innerHTML = catalog.map(c=>`<tr><td><strong>${esc(c.name)}</strong></td><td>${rp(c.price)}</td><td>${esc(c.variants||'-')}</td><td><button class="btn bd" style="padding:.3rem .5rem;min-height:30px;font-size:.75rem" onclick="deleteCatalogItem('${c.id}')">Hapus</button></td></tr>`).join('');
 }
 document.getElementById('catForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const name = document.getElementById('catName').value.trim();
   const price = Number(document.getElementById('catPrice').value||0);
+  const variants = document.getElementById('catVariants').value.trim();
   if(!name || price<=0) return toast('Nama & harga wajib diisi');
-  catalog.push({ id: uid(), name, price });
+  catalog.push({ id: uid(), name, price, variants });
   document.getElementById('catForm').reset();
   renderCatalog();
-  await persist('Barang ditambahkan ke menu cepat');
+  await persist('Barang ditambahkan ke katalog');
 });
 async function deleteCatalogItem(id){
-  if(!confirm('Hapus barang ini dari menu cepat?')) return;
+  if(!confirm('Hapus barang ini dari katalog?')) return;
   catalog = catalog.filter(x=>x.id!==id);
   renderCatalog();
   await persist('Barang dihapus');
@@ -331,7 +324,6 @@ function compressImage(file){return new Promise((resolve,reject)=>{const fr=new 
 async function handlePhotoInput(ev){const f=ev.target.files[0]; if(!f) return; currentPhoto=await compressImage(f); previewPhoto(currentPhoto); ev.target.value=''}
 document.getElementById('fotoCamera').addEventListener('change',handlePhotoInput); document.getElementById('fotoGallery').addEventListener('change',handlePhotoInput);
 
-// FORM TAMBAH SISWA BARU (SAMPUI DENGAN PILIH KELAS & LANGSUNG MASUK KE DETAIL)
 document.getElementById('formMain').addEventListener('submit',async e=>{
   e.preventDefault(); 
   try{
@@ -353,7 +345,7 @@ document.getElementById('formMain').addEventListener('submit',async e=>{
       rows.push({id:newId,name,className,photo:currentPhoto||null,createdAt:Date.now(),trx:[]}); 
       await persist('Siswa baru ditambahkan');
       closeModal('mForm');
-      openDetail(newId); // Langsung buka detail catatan siswa baru
+      openDetail(newId);
     } 
   }catch(err){console.error(err); toast('Gagal menyimpan')}
 });
@@ -409,13 +401,13 @@ function openDetail(id){currentId=id; const p=rows.find(x=>x.id===id); if(!p) re
 async function payDebt(){try{const p=rows.find(x=>x.id===currentId); if(!p) return; const amount=Number(document.getElementById('payAmount').value||0); if(amount<=0) return toast('Nominal tidak valid'); p.trx.push({id:uid(),type:'pay',item:'-',amount,ts:Date.now()}); await persist('Pembayaran/Setoran disimpan'); openDetail(currentId)}catch(err){console.error(err); toast('Gagal menyimpan')}}
 
 // ==========================================
-// FITUR KASIR CEPAT (MULTI-CLICK & KALKULATOR)
+// FITUR KASIR CEPAT (1-STEP LANGSUNG SIMPAN & KUNCI LIMIT)
 // ==========================================
 function startQuickLoan(id){
   const p = rows.find(x=>x.id===id);
   if(!p) return;
   
-  // CEK KUNCI BATAS UMUR CATATAN (DENGAN HARI)
+  // CEK UMUR CATATAN TERLALU LAMA
   const oldest=outstandingLots(p)[0];
   if(oldest){
     const days=Math.floor((Date.now()-oldest.ts)/86400000);
@@ -426,20 +418,18 @@ function startQuickLoan(id){
   }
 
   currentId = id;
-  cartItems = {}; // Reset keranjang
+  cartItems = {}; 
+  closeModal('mDetail'); // TUTUP MODAL DETAIL AGAR TIDAK BERTUMPUK
   document.getElementById('loanStudentName').textContent = p.name;
   renderQuickGrid();
   renderCart();
-  
-  document.getElementById('loanStep1').classList.remove('hidden');
-  document.getElementById('loanStep2').classList.add('hidden');
   openModal('mAddLoan');
 }
 
 function renderQuickGrid(){
   const grid = document.getElementById('quickGrid');
   if(!catalog.length){
-    grid.innerHTML = '<div class="hint" style="grid-column:1/-1;text-align:center">Belum ada barang di Menu Cepat. Tambahkan di menu Top Seller.</div>';
+    grid.innerHTML = '<div class="hint" style="grid-column:1/-1;text-align:center">Belum ada barang di katalog. Tambahkan via menu Katalog.</div>';
     return;
   }
   grid.innerHTML = catalog.map(c => `
@@ -471,48 +461,46 @@ function addManualToCart(){
 function renderCart(){
   const box = document.getElementById('cartBox');
   const keys = Object.keys(cartItems);
+  const p = rows.find(x => x.id === currentId);
+  const currentDebt = p ? sumDebt(p) : 0;
+  const limit = currentLimit();
+  const remainLimit = Math.max(0, limit - currentDebt);
+
   if(!keys.length){
     box.innerHTML = '<div class="hint" style="text-align:center">Belum ada barang dipilih. Klik tombol di atas!</div>';
+    document.getElementById('cartTotalDisplay').textContent = 'Rp 0';
+    document.getElementById('finalAmountInput').value = 0;
+    document.getElementById('limitWarnMsg').style.display = 'none';
+    document.getElementById('btnSaveLoan').disabled = false;
     return;
   }
-  box.innerHTML = keys.map(k => `
-    <span class="cart-tag">
-      ${esc(k)} x${cartItems[k].qty} (${rp(cartItems[k].price * cartItems[k].qty)})
-      <span style="cursor:pointer;margin-left:.2rem;font-weight:900" onclick="removeFromCart('${esc(k)}')">✕</span>
-    </span>
-  `).join('');
+
+  let total = 0;
+  box.innerHTML = keys.map(k => {
+    const itemTot = cartItems[k].price * cartItems[k].qty;
+    total += itemTot;
+    return `<span class="cart-tag">${esc(k)} x${cartItems[k].qty} (${rp(itemTot)}) <span style="cursor:pointer;margin-left:.2rem;font-weight:900" onclick="removeFromCart('${esc(k)}')">✕</span></span>`;
+  }).join('');
+
+  document.getElementById('cartTotalDisplay').textContent = rp(total);
+  document.getElementById('finalAmountInput').value = total;
+
+  const warnEl = document.getElementById('limitWarnMsg');
+  if((currentDebt + total) > limit){
+    warnEl.style.display = 'block';
+    warnEl.textContent = `⚠️ Total catatan baru (${rp(total)}) melebihi sisa limit siswa (${rp(remainLimit)})! Total utang nanti: ${rp(currentDebt + total)} / Limit: ${rp(limit)}`;
+    document.getElementById('btnSaveLoan').disabled = true;
+    document.getElementById('btnSaveLoan').style.opacity = '0.5';
+  } else {
+    warnEl.style.display = 'none';
+    document.getElementById('btnSaveLoan').disabled = false;
+    document.getElementById('btnSaveLoan').style.opacity = '1';
+  }
 }
 
 function removeFromCart(name){
   delete cartItems[name];
   renderCart();
-}
-
-function goToStep2(){
-  const keys = Object.keys(cartItems);
-  if(!keys.length) return toast('Pilih minimal 1 barang');
-  
-  let total = 0;
-  let summaryArr = [];
-  
-  keys.forEach(k => {
-    const itemTot = cartItems[k].price * cartItems[k].qty;
-    total += itemTot;
-    summaryArr.push(`${k} (${rp(itemTot)})`);
-  });
-  
-  const summaryStr = summaryArr.join(' + ');
-  document.getElementById('calcSummary').textContent = summaryStr;
-  document.getElementById('calcTotalDisplay').textContent = rp(total);
-  document.getElementById('finalAmountInput').value = total;
-  
-  document.getElementById('loanStep1').classList.add('hidden');
-  document.getElementById('loanStep2').classList.remove('hidden');
-}
-
-function goToStep1(){
-  document.getElementById('loanStep2').classList.add('hidden');
-  document.getElementById('loanStep1').classList.remove('hidden');
 }
 
 async function saveLoanFinal(){
@@ -521,14 +509,19 @@ async function saveLoanFinal(){
     if(!p) return;
     
     const finalAmount = Number(document.getElementById('finalAmountInput').value || 0);
-    if(finalAmount <= 0) return toast('Nominal total tidak valid');
+    if(finalAmount <= 0) return toast('Pilih barang terlebih dahulu');
     
     const debt = sumDebt(p), limit = currentLimit();
     if((debt + finalAmount) > limit){
-      return toast('Waduh, total ini melebihi limit kasbon (' + rp(limit) + ')');
+      return toast('Gagal: Melebihi sisa limit catatan!');
     }
     
-    const summaryStr = document.getElementById('calcSummary').textContent;
+    const keys = Object.keys(cartItems);
+    let summaryArr = [];
+    keys.forEach(k => {
+      summaryArr.push(`${k} x${cartItems[k].qty} (${rp(cartItems[k].price * cartItems[k].qty)})`);
+    });
+    const summaryStr = summaryArr.join(' + ');
     
     p.trx.push({
       id: uid(),
@@ -550,7 +543,7 @@ async function saveLoanFinal(){
 async function removePerson(id){try{if(!confirm('Hapus data siswa ini?')) return; rows=rows.filter(x=>x.id!==id); await persist('Data dihapus'); closeModal('mDetail')}catch(err){console.error(err); toast('Gagal menyimpan')}}
 function buildSummaryText(){const total=rows.reduce((s,x)=>s+Math.max(0,sumDebt(x)),0); const unpaid=rows.filter(x=>sumDebt(x)>0).length; return `Catatan Warung by MZW Digital\n${settings.shopName||'Warung ZZ'}\n\nTotal anak: ${rows.length}\nBelum lunas: ${unpaid}\nAktivitas hari ini: ${transactionsToday()}\nTotal piutang: ${rp(total)}`}
 function shareSummary(){const txt=buildSummaryText(); if(navigator.share){navigator.share({title:'Catatan Warung',text:txt}).catch(()=>{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')})} else {window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')} }
-function downloadBackup(){const data={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:8,updatedAt:Date.now()}}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catatan-warung-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Backup JSON dibuat')}
+function downloadBackup(){const data={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:Date.now()}}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catatan-warung-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Backup JSON dibuat')}
 
 document.getElementById('importJson').addEventListener('change',async e=>{const f=e.target.files[0]; if(!f) return; try{if(!confirm('Import akan mengganti data yang ada di aplikasi ini. Lanjut?')) return; const parsed=JSON.parse(await f.text()); const n=normalizeImported(parsed); settings=n.settings; security=n.security; rows=n.items; catalog=n.catalog; syncSettingsUI(); populateClassSelects(); await persist('Import JSON berhasil'); initLock()}catch(err){console.error(err); toast('File JSON tidak valid')} finally {e.target.value=''}})
 function initLock(){enteredPin=''; updateDots(); const needLock=security.lockEnabled&&security.pin; if(!needLock){unlocked=true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('appShell').classList.remove('hidden'); return} if(!unlocked){document.getElementById('lockScreen').classList.remove('hidden'); document.getElementById('appShell').classList.add('hidden')} togglePinDots()}
