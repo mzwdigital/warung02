@@ -47,7 +47,6 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 .total-box{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:.8rem;margin-bottom:.8rem;display:flex;justify-content:space-between;align-items:center}
 .total-label{font-size:.85rem;font-weight:700;color:var(--muted)}
 .total-value{font-size:1.3rem;font-weight:900;color:var(--ok)}
-.warn-box{background:var(--erbg);border:1px solid #fecaca;color:var(--er);padding:.6rem .8rem;border-radius:8px;font-size:.78rem;font-weight:700;margin-bottom:.8rem;display:none}
 
 @media (max-width:760px){.topin,.wrap{padding-left:.85rem;padding-right:.85rem}.actions{grid-template-columns:repeat(3,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bar,.two,.detailhead,.paybox{grid-template-columns:1fr}.itemin{grid-template-columns:58px minmax(0,1fr);gap:.75rem}.ph{width:58px;height:58px}.bigph{width:82px;height:82px}}
 @media (max-width:420px){.actions{grid-template-columns:1fr 1fr}.btn{padding:.72rem .8rem;font-size:.85rem}.sheet{padding:.95rem .9rem calc(.95rem + env(safe-area-inset-bottom))}}
@@ -103,9 +102,12 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 <div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.5rem"><button type="button" class="btn bg" onclick="closeModal('mForm')">Batal</button><button type="submit" class="btn bp">Simpan & Buka Catatan</button></div>
 </form></div></div>
 
-<!-- MODAL KASIR CEPAT (TAMBAH CATATAN SELESAI DENGAN 1 STEP) -->
+<!-- MODAL KASIR CEPAT (HARD LOCK LIMIT & HEADER LENGKAP) -->
 <div class="modal" id="mAddLoan"><div class="sheet"><div class="handle"></div>
-  <div class="mh">Tambah Catatan: <span id="loanStudentName" style="color:var(--pri)"></span></div>
+  <div class="mh" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.4rem">
+    <div>Tambah Catatan: <span id="loanStudentName" style="color:var(--pri)"></span></div>
+    <div id="loanStudentMeta" style="font-size:.82rem;color:var(--muted);font-weight:bold"></div>
+  </div>
   <div class="small" style="margin-bottom:.8rem">Klik barang di bawah ini berkali-kali sesuai jumlah pinjam:</div>
   <div class="quick-grid" id="quickGrid"></div>
   <div class="fg" style="margin-bottom:.8rem"><label>Atau barang unik / lainnya:</label>
@@ -118,7 +120,6 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
   <div class="fg"><label>Keranjang Barang Dipilih:</label>
     <div class="cart-box" id="cartBox"><div class="hint" style="text-align:center">Belum ada barang dipilih. Klik tombol di atas!</div></div>
   </div>
-  <div class="warn-box" id="limitWarnMsg"></div>
   <div class="total-box">
     <span class="total-label">Total Catatan:</span>
     <span class="total-value" id="cartTotalDisplay">Rp 0</span>
@@ -130,7 +131,7 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
   </div>
 </div></div>
 
-<!-- MODAL KATALOG BARANG LENGKAP (DENGAN VARIAN UNTUK TERMUX AI) -->
+<!-- MODAL KATALOG BARANG (DENGAN CENTANG KASIR CEPAT) -->
 <div class="modal" id="mCatalog"><div class="sheet"><div class="handle"></div><div class="mh">📋 Katalog Barang Warung</div>
   <div class="sec" style="margin-bottom:1rem">
     <form class="form" id="catForm">
@@ -143,9 +144,10 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
     </form>
   </div>
   <div class="mh" style="font-size:.95rem">Daftar Barang Saat Ini:</div>
+  <div class="small" style="margin-bottom:.6rem;color:var(--muted)">Centang pada kolom <strong>Kasir</strong> agar barang muncul sebagai tombol cepat di menu Tambah Catatan.</div>
   <table class="tbl">
-    <thead><tr><th>Barang</th><th>Harga</th><th>Varian/Rasa</th><th>Aksi</th></tr></thead>
-    <tbody id="catTable"><tr><td colspan="4">Belum ada barang di katalog</td></tr></tbody>
+    <thead><tr><th style="width:50px;text-align:center">Kasir</th><th>Barang</th><th>Harga</th><th>Varian/Rasa</th><th>Aksi</th></tr></thead>
+    <tbody id="catTable"><tr><td colspan="5" style="text-align:center">Belum ada barang di katalog</td></tr></tbody>
   </table>
   <div style="margin-top:1rem"><button type="button" class="btn bg" onclick="closeModal('mCatalog')">Tutup</button></div>
 </div></div>
@@ -176,8 +178,12 @@ let cartItems = {};
 function defaultClasses(){return ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B','Lainnya']}
 function defaultSettings(){return {shopName:'Warung ZZ',limit:5000,maxDays:3,classes:defaultClasses(),theme:'orange'}}
 function defaultSecurity(){return {lockEnabled:false,pin:''}}
-function defaultCatalog(){return [{id:'1',name:'Es Krim',price:1000,variants:'Coklat, Stroberi, Taro, Alpukat'},{id:'2',name:'Pop Ice',price:3000,variants:'Coklat, Vanilla, Mangga'},{id:'3',name:'Minuman',price:1000,variants:''}]}
-function defaultState(){return {settings:defaultSettings(),security:defaultSecurity(),items:[],catalog:defaultCatalog(),meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:Date.now()}}}
+function defaultCatalog(){return [
+  {id:'1',name:'Es Krim',price:1000,variants:'Coklat, Stroberi, Taro, Alpukat',showInQuick:true},
+  {id:'2',name:'Pop Ice',price:3000,variants:'Coklat, Vanilla, Mangga',showInQuick:true},
+  {id:'3',name:'Minuman',price:1000,variants:'',showInQuick:true}
+]}
+function defaultState(){return {settings:defaultSettings(),security:defaultSecurity(),items:[],catalog:defaultCatalog(),meta:{app:'CatatanWarung by MZW Digital',version:10,updatedAt:Date.now()}}}
 
 function toast(msg){const t=document.getElementById('toast');t.innerHTML='<div>'+msg+'</div>';setTimeout(()=>t.innerHTML='',2400)}
 function esc(s){return String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
@@ -246,12 +252,12 @@ function normalizeImported(parsed){
     security:{lockEnabled:!!sec.lockEnabled,pin:String(sec.pin||'')},
     items:Array.isArray(parsed.items)?parsed.items:[],
     catalog:Array.isArray(parsed.catalog)?parsed.catalog:defaultCatalog(),
-    meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:parsed.meta?.updatedAt||Date.now()}
+    meta:{app:'CatatanWarung by MZW Digital',version:10,updatedAt:parsed.meta?.updatedAt||Date.now()}
   }
 }
 
 async function loadState(){try{const saved=await dbGet(STATE_KEY); state=saved?normalizeImported(saved):defaultState(); settings=state.settings; security=state.security; rows=Array.isArray(state.items)?state.items:[]; catalog=Array.isArray(state.catalog)?state.catalog:defaultCatalog();}catch(e){console.error(e); state=defaultState(); settings=state.settings; security=state.security; rows=[]; catalog=defaultCatalog();} syncSettingsUI(); populateClassSelects(); applyBrand(); render(); initLock()}
-async function saveState(){state={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:Date.now()}}; await dbSet(STATE_KEY,state)}
+async function saveState(){state={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:10,updatedAt:Date.now()}}; await dbSet(STATE_KEY,state)}
 async function persist(msg='Tersimpan'){await saveState();applyBrand();render(); if(msg) toast(msg)}
 function applyTheme(){const m={orange:['#c96b00','#a55600'],blue:['#2265d8','#184ba1'],green:['#2e8b57','#20633d'],purple:['#8257d7','#6240ab']}[settings.theme||'orange']; document.documentElement.style.setProperty('--pri',m[0]); document.documentElement.style.setProperty('--pri2',m[1])}
 
@@ -294,20 +300,36 @@ function render(){
 function openCatalog(){ renderCatalog(); openModal('mCatalog'); }
 function renderCatalog(){
   const tb = document.getElementById('catTable');
-  if(!catalog.length){ tb.innerHTML='<tr><td colspan="4" style="text-align:center">Belum ada barang di katalog</td></tr>'; return; }
-  tb.innerHTML = catalog.map(c=>`<tr><td><strong>${esc(c.name)}</strong></td><td>${rp(c.price)}</td><td>${esc(c.variants||'-')}</td><td><button class="btn bd" style="padding:.3rem .5rem;min-height:30px;font-size:.75rem" onclick="deleteCatalogItem('${c.id}')">Hapus</button></td></tr>`).join('');
+  if(!catalog.length){ tb.innerHTML='<tr><td colspan="5" style="text-align:center">Belum ada barang di katalog</td></tr>'; return; }
+  tb.innerHTML = catalog.map(c=>`<tr>
+    <td style="text-align:center"><input type="checkbox" style="width:18px;height:18px;cursor:pointer" ${c.showInQuick!==false?'checked':''} onchange="toggleQuickItem('${c.id}', this.checked)"></td>
+    <td><strong>${esc(c.name)}</strong></td>
+    <td>${rp(c.price)}</td>
+    <td>${esc(c.variants||'-')}</td>
+    <td><button class="btn bd" style="padding:.3rem .5rem;min-height:30px;font-size:.75rem" onclick="deleteCatalogItem('${c.id}')">Hapus</button></td>
+  </tr>`).join('');
 }
+
+async function toggleQuickItem(id, checked){
+  const item = catalog.find(x=>x.id===id);
+  if(item){
+    item.showInQuick = checked;
+    await persist('Menu kasir cepat diperbarui');
+  }
+}
+
 document.getElementById('catForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const name = document.getElementById('catName').value.trim();
   const price = Number(document.getElementById('catPrice').value||0);
   const variants = document.getElementById('catVariants').value.trim();
   if(!name || price<=0) return toast('Nama & harga wajib diisi');
-  catalog.push({ id: uid(), name, price, variants });
+  catalog.push({ id: uid(), name, price, variants, showInQuick: true });
   document.getElementById('catForm').reset();
   renderCatalog();
   await persist('Barang ditambahkan ke katalog');
 });
+
 async function deleteCatalogItem(id){
   if(!confirm('Hapus barang ini dari katalog?')) return;
   catalog = catalog.filter(x=>x.id!==id);
@@ -401,7 +423,7 @@ function openDetail(id){currentId=id; const p=rows.find(x=>x.id===id); if(!p) re
 async function payDebt(){try{const p=rows.find(x=>x.id===currentId); if(!p) return; const amount=Number(document.getElementById('payAmount').value||0); if(amount<=0) return toast('Nominal tidak valid'); p.trx.push({id:uid(),type:'pay',item:'-',amount,ts:Date.now()}); await persist('Pembayaran/Setoran disimpan'); openDetail(currentId)}catch(err){console.error(err); toast('Gagal menyimpan')}}
 
 // ==========================================
-// FITUR KASIR CEPAT (1-STEP LANGSUNG SIMPAN & KUNCI LIMIT)
+// KASIR CEPAT (HARD LOCK LIMIT KETAT & FITUR FILTER KATALOG)
 // ==========================================
 function startQuickLoan(id){
   const p = rows.find(x=>x.id===id);
@@ -419,8 +441,15 @@ function startQuickLoan(id){
 
   currentId = id;
   cartItems = {}; 
-  closeModal('mDetail'); // TUTUP MODAL DETAIL AGAR TIDAK BERTUMPUK
+  closeModal('mDetail');
+  
+  const limit = currentLimit();
+  const debt = sumDebt(p);
+  const remain = Math.max(0, limit - debt);
+  
   document.getElementById('loanStudentName').textContent = p.name;
+  document.getElementById('loanStudentMeta').textContent = `(${p.className}) · Sisa Limit: ${rp(remain)}`;
+  
   renderQuickGrid();
   renderCart();
   openModal('mAddLoan');
@@ -428,11 +457,12 @@ function startQuickLoan(id){
 
 function renderQuickGrid(){
   const grid = document.getElementById('quickGrid');
-  if(!catalog.length){
-    grid.innerHTML = '<div class="hint" style="grid-column:1/-1;text-align:center">Belum ada barang di katalog. Tambahkan via menu Katalog.</div>';
+  const quickList = catalog.filter(c => c.showInQuick !== false);
+  if(!quickList.length){
+    grid.innerHTML = '<div class="hint" style="grid-column:1/-1;text-align:center">Belum ada barang dicentang untuk Kasir Cepat. Centang di menu Katalog!</div>';
     return;
   }
-  grid.innerHTML = catalog.map(c => `
+  grid.innerHTML = quickList.map(c => `
     <div class="quick-btn" onclick="addToCart('${esc(c.name)}', ${c.price})">
       <span class="q-name">${esc(c.name)}</span>
       <span class="q-price">${rp(c.price)}</span>
@@ -441,6 +471,21 @@ function renderQuickGrid(){
 }
 
 function addToCart(name, price){
+  const p = rows.find(x => x.id === currentId);
+  const currentDebt = p ? sumDebt(p) : 0;
+  const limit = currentLimit();
+  
+  let currentCartTotal = 0;
+  Object.keys(cartItems).forEach(k => {
+    currentCartTotal += cartItems[k].price * cartItems[k].qty;
+  });
+
+  // HARD LOCK: JIKA PENAMBAHAN ITEM MELEBIHI LIMIT, TOLAK SEGERA!
+  if((currentDebt + currentCartTotal + price) > limit){
+    const remain = Math.max(0, limit - currentDebt - currentCartTotal);
+    return toast(`⚠️ Sisa limit ${p ? p.name : 'siswa'} tinggal ${rp(remain)}! Tidak bisa tambah item ini.`);
+  }
+
   if(cartItems[name]){
     cartItems[name].qty += 1;
   } else {
@@ -453,6 +498,7 @@ function addManualToCart(){
   const name = document.getElementById('manualItemName').value.trim();
   const price = Number(document.getElementById('manualItemPrice').value || 0);
   if(!name || price <= 0) return toast('Isi nama & harga barang unik');
+  
   addToCart(name, price);
   document.getElementById('manualItemName').value = '';
   document.getElementById('manualItemPrice').value = '';
@@ -461,17 +507,11 @@ function addManualToCart(){
 function renderCart(){
   const box = document.getElementById('cartBox');
   const keys = Object.keys(cartItems);
-  const p = rows.find(x => x.id === currentId);
-  const currentDebt = p ? sumDebt(p) : 0;
-  const limit = currentLimit();
-  const remainLimit = Math.max(0, limit - currentDebt);
 
   if(!keys.length){
     box.innerHTML = '<div class="hint" style="text-align:center">Belum ada barang dipilih. Klik tombol di atas!</div>';
     document.getElementById('cartTotalDisplay').textContent = 'Rp 0';
     document.getElementById('finalAmountInput').value = 0;
-    document.getElementById('limitWarnMsg').style.display = 'none';
-    document.getElementById('btnSaveLoan').disabled = false;
     return;
   }
 
@@ -484,18 +524,6 @@ function renderCart(){
 
   document.getElementById('cartTotalDisplay').textContent = rp(total);
   document.getElementById('finalAmountInput').value = total;
-
-  const warnEl = document.getElementById('limitWarnMsg');
-  if((currentDebt + total) > limit){
-    warnEl.style.display = 'block';
-    warnEl.textContent = `⚠️ Total catatan baru (${rp(total)}) melebihi sisa limit siswa (${rp(remainLimit)})! Total utang nanti: ${rp(currentDebt + total)} / Limit: ${rp(limit)}`;
-    document.getElementById('btnSaveLoan').disabled = true;
-    document.getElementById('btnSaveLoan').style.opacity = '0.5';
-  } else {
-    warnEl.style.display = 'none';
-    document.getElementById('btnSaveLoan').disabled = false;
-    document.getElementById('btnSaveLoan').style.opacity = '1';
-  }
 }
 
 function removeFromCart(name){
@@ -513,7 +541,7 @@ async function saveLoanFinal(){
     
     const debt = sumDebt(p), limit = currentLimit();
     if((debt + finalAmount) > limit){
-      return toast('Gagal: Melebihi sisa limit catatan!');
+      return toast('Gagal: Total melebihi sisa limit catatan!');
     }
     
     const keys = Object.keys(cartItems);
@@ -543,7 +571,7 @@ async function saveLoanFinal(){
 async function removePerson(id){try{if(!confirm('Hapus data siswa ini?')) return; rows=rows.filter(x=>x.id!==id); await persist('Data dihapus'); closeModal('mDetail')}catch(err){console.error(err); toast('Gagal menyimpan')}}
 function buildSummaryText(){const total=rows.reduce((s,x)=>s+Math.max(0,sumDebt(x)),0); const unpaid=rows.filter(x=>sumDebt(x)>0).length; return `Catatan Warung by MZW Digital\n${settings.shopName||'Warung ZZ'}\n\nTotal anak: ${rows.length}\nBelum lunas: ${unpaid}\nAktivitas hari ini: ${transactionsToday()}\nTotal piutang: ${rp(total)}`}
 function shareSummary(){const txt=buildSummaryText(); if(navigator.share){navigator.share({title:'Catatan Warung',text:txt}).catch(()=>{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')})} else {window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')} }
-function downloadBackup(){const data={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:9,updatedAt:Date.now()}}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catatan-warung-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Backup JSON dibuat')}
+function downloadBackup(){const data={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:10,updatedAt:Date.now()}}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catatan-warung-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Backup JSON dibuat')}
 
 document.getElementById('importJson').addEventListener('change',async e=>{const f=e.target.files[0]; if(!f) return; try{if(!confirm('Import akan mengganti data yang ada di aplikasi ini. Lanjut?')) return; const parsed=JSON.parse(await f.text()); const n=normalizeImported(parsed); settings=n.settings; security=n.security; rows=n.items; catalog=n.catalog; syncSettingsUI(); populateClassSelects(); await persist('Import JSON berhasil'); initLock()}catch(err){console.error(err); toast('File JSON tidak valid')} finally {e.target.value=''}})
 function initLock(){enteredPin=''; updateDots(); const needLock=security.lockEnabled&&security.pin; if(!needLock){unlocked=true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('appShell').classList.remove('hidden'); return} if(!unlocked){document.getElementById('lockScreen').classList.remove('hidden'); document.getElementById('appShell').classList.add('hidden')} togglePinDots()}
