@@ -103,12 +103,9 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 <div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.5rem"><button type="button" class="btn bg" onclick="closeModal('mForm')">Batal</button><button type="submit" class="btn bp">Simpan & Buka Catatan</button></div>
 </form></div></div>
 
-<!-- MODAL KASIR CEPAT -->
+<!-- MODAL KASIR CEPAT (HEADER LANGSUNG DI SAMPING NAMA) -->
 <div class="modal" id="mAddLoan"><div class="sheet"><div class="handle"></div>
-  <div class="mh" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.4rem">
-    <div>Tambah Catatan: <span id="loanStudentName" style="color:var(--pri)"></span></div>
-    <div id="loanStudentMeta" style="font-size:.82rem;color:var(--muted);font-weight:bold"></div>
-  </div>
+  <div class="mh">Tambah Catatan: <span id="loanStudentName" style="color:var(--pri)"></span> <span id="loanStudentMeta" style="font-size:.82rem;color:var(--muted);font-weight:600;margin-left:.2rem"></span></div>
   <div class="small" style="margin-bottom:.8rem">Klik barang di bawah ini berkali-kali sesuai jumlah catatan:</div>
   <div class="quick-grid" id="quickGrid"></div>
   <div class="fg" style="margin-bottom:.8rem"><label>Atau barang unik / lainnya:</label>
@@ -184,7 +181,7 @@ function defaultCatalog(){return [
   {id:'2',name:'Pop Ice',price:3000,variants:'Coklat, Vanilla, Mangga',showInQuick:true},
   {id:'3',name:'Minuman',price:1000,variants:'',showInQuick:true}
 ]}
-function defaultState(){return {settings:defaultSettings(),security:defaultSecurity(),items:[],catalog:defaultCatalog(),meta:{app:'CatatanWarung by MZW Digital',version:12,updatedAt:Date.now()}}}
+function defaultState(){return {settings:defaultSettings(),security:defaultSecurity(),items:[],catalog:defaultCatalog(),meta:{app:'CatatanWarung by MZW Digital',version:13,updatedAt:Date.now()}}}
 
 function toast(msg){const t=document.getElementById('toast');t.innerHTML='<div>'+msg+'</div>';setTimeout(()=>t.innerHTML='',2400)}
 function esc(s){return String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
@@ -260,12 +257,12 @@ function normalizeImported(parsed){
     security:{lockEnabled:!!sec.lockEnabled,pin:String(sec.pin||'')},
     items:Array.isArray(parsed.items)?parsed.items:[],
     catalog:Array.isArray(parsed.catalog)?parsed.catalog:defaultCatalog(),
-    meta:{app:'CatatanWarung by MZW Digital',version:12,updatedAt:parsed.meta?.updatedAt||Date.now()}
+    meta:{app:'CatatanWarung by MZW Digital',version:13,updatedAt:parsed.meta?.updatedAt||Date.now()}
   }
 }
 
 async function loadState(){try{const saved=await dbGet(STATE_KEY); state=saved?normalizeImported(saved):defaultState(); settings=state.settings; security=state.security; rows=Array.isArray(state.items)?state.items:[]; catalog=Array.isArray(state.catalog)?state.catalog:defaultCatalog();}catch(e){console.error(e); state=defaultState(); settings=state.settings; security=state.security; rows=[]; catalog=defaultCatalog();} syncSettingsUI(); populateClassSelects(); applyBrand(); render(); initLock()}
-async function saveState(){state={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:12,updatedAt:Date.now()}}; await dbSet(STATE_KEY,state)}
+async function saveState(){state={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:13,updatedAt:Date.now()}}; await dbSet(STATE_KEY,state)}
 async function persist(msg='Tersimpan'){await saveState();applyBrand();render(); if(msg) toast(msg)}
 function applyTheme(){const m={orange:['#c96b00','#a55600'],blue:['#2265d8','#184ba1'],green:['#2e8b57','#20633d'],purple:['#8257d7','#6240ab']}[settings.theme||'orange']; document.documentElement.style.setProperty('--pri',m[0]); document.documentElement.style.setProperty('--pri2',m[1])}
 
@@ -450,7 +447,7 @@ function openDetail(id){currentId=id; const p=rows.find(x=>x.id===id); if(!p) re
 async function payDebt(){try{const p=rows.find(x=>x.id===currentId); if(!p) return; const amount=Number(document.getElementById('payAmount').value||0); if(amount<=0) return toast('Nominal tidak valid'); p.trx.push({id:uid(),type:'pay',item:'-',amount,ts:Date.now()}); await persist('Pembayaran/Setoran disimpan'); openDetail(currentId)}catch(err){console.error(err); toast('Gagal menyimpan')}}
 
 // ==========================================
-// KASIR CEPAT
+// KASIR CEPAT (HEADER INLINE DI SAMPING NAMA)
 // ==========================================
 function startQuickLoan(id){
   const p = rows.find(x=>x.id===id);
@@ -478,7 +475,7 @@ function startQuickLoan(id){
   closeModal('mDetail');
   
   document.getElementById('loanStudentName').textContent = p.name;
-  document.getElementById('loanStudentMeta').textContent = `(${p.className}) · Sisa Limit: ${rp(remain)}`;
+  document.getElementById('loanStudentMeta').textContent = `(${p.className}) • Sisa Limit: ${rp(remain)}`;
   
   renderQuickGrid();
   renderCart();
@@ -600,7 +597,7 @@ async function saveLoanFinal(){
 async function removePerson(id){try{if(!confirm('Hapus data ini?')) return; rows=rows.filter(x=>x.id!==id); await persist('Data dihapus'); closeModal('mDetail')}catch(err){console.error(err); toast('Gagal menyimpan')}}
 function buildSummaryText(){const total=rows.reduce((s,x)=>s+Math.max(0,sumDebt(x)),0); const unpaid=rows.filter(x=>sumDebt(x)>0).length; return `Catatan Warung by MZW Digital\n${settings.shopName||'Warung ZZ'}\n\nTotal anak: ${rows.length}\nBelum lunas: ${unpaid}\nAktivitas hari ini: ${transactionsToday()}\nTotal piutang: ${rp(total)}`}
 function shareSummary(){const txt=buildSummaryText(); if(navigator.share){navigator.share({title:'Catatan Warung',text:txt}).catch(()=>{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')})} else {window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')} }
-function downloadBackup(){const data={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:12,updatedAt:Date.now()}}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catatan-warung-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Backup JSON dibuat')}
+function downloadBackup(){const data={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:13,updatedAt:Date.now()}}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catatan-warung-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Backup JSON dibuat')}
 
 document.getElementById('importJson').addEventListener('change',async e=>{const f=e.target.files[0]; if(!f) return; try{if(!confirm('Import akan mengganti data yang ada di aplikasi ini. Lanjut?')) return; const parsed=JSON.parse(await f.text()); const n=normalizeImported(parsed); settings=n.settings; security=n.security; rows=n.items; catalog=n.catalog; syncSettingsUI(); populateClassSelects(); await persist('Import JSON berhasil'); initLock()}catch(err){console.error(err); toast('File JSON tidak valid')} finally {e.target.value=''}})
 function initLock(){enteredPin=''; updateDots(); const needLock=security.lockEnabled&&security.pin; if(!needLock){unlocked=true; document.getElementById('lockScreen').classList.add('hidden'); document.getElementById('appShell').classList.remove('hidden'); return} if(!unlocked){document.getElementById('lockScreen').classList.remove('hidden'); document.getElementById('appShell').classList.add('hidden')} togglePinDots()}
