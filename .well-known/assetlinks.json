@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.catatan.warung",
+        "sha256_cert_fingerprints": ["65:47:D6:46:D4:D7:76:24:12:B6:6A:A5:86:E0:5A:5A:15:EF:60:6F:40:BF:B5:53:DB:58:FB:AE:31:85:CC:24"]
+      }
+    }]
