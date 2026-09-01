@@ -103,7 +103,7 @@ button,input,select,textarea{font:inherit;color:inherit}img{max-width:100%;displ
 <div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.5rem"><button type="button" class="btn bg" onclick="closeModal('mForm')">Batal</button><button type="submit" class="btn bp">Simpan & Buka Catatan</button></div>
 </form></div></div>
 
-<!-- MODAL KASIR CEPAT (HEADER LANGSUNG DI SAMPING NAMA) -->
+<!-- MODAL KASIR CEPAT -->
 <div class="modal" id="mAddLoan"><div class="sheet"><div class="handle"></div>
   <div class="mh">Tambah Catatan: <span id="loanStudentName" style="color:var(--pri)"></span> <span id="loanStudentMeta" style="font-size:.82rem;color:var(--muted);font-weight:600;margin-left:.2rem"></span></div>
   <div class="small" style="margin-bottom:.8rem">Klik barang di bawah ini berkali-kali sesuai jumlah catatan:</div>
@@ -200,7 +200,25 @@ function getDataLimit(p){
   return currentLimit();
 }
 
-function outstandingLots(p){const lots=[];for(const t of (p.trx||[]).sort((a,b)=>a.ts-b.ts)){if(t.type==='loan') lots.push({ts:t.ts,remain:t.amount}); else {let pay=t.amount; for(const lot of lots){if(pay<=0) break; const used=Math.min(pay,lot.remain); lot.remain-=used; pay-=used;}}}return lots.filter(x=>x.remain>0)}
+// LOGIKA REVERSE FIFO TERBARU: Menghitung umur utang dengan 100% akurat dan mengabaikan saldo.
+function outstandingLots(p){
+  const totalDebt = sumDebt(p);
+  if(totalDebt <= 0) return [];
+  
+  const lots = [];
+  let rem = totalDebt;
+  
+  const sortedLoans = [...(p.trx || [])].filter(t => t.type === 'loan').sort((a,b) => b.ts - a.ts);
+  
+  for(const t of sortedLoans){
+    if(rem <= 0) break;
+    const amt = Math.min(t.amount, rem);
+    lots.push({ ts: t.ts, remain: amt });
+    rem -= amt;
+  }
+  return lots.reverse();
+}
+
 function oldestOutstandingTs(p){const lots=outstandingLots(p);return lots.length?Math.min(...lots.map(x=>x.ts)):Infinity}
 
 function statusOf(p){
@@ -362,7 +380,30 @@ function openEdit(id){
 
 function openSettings(){syncSettingsUI(); openModal('mSettings')}
 function pickCamera(){document.getElementById('fotoCamera').click()} function pickGallery(){document.getElementById('fotoGallery').click()} function previewPhoto(data){const p=document.getElementById('fotoPrev'); p.src=data; p.classList.remove('hidden')}
-function compressImage(file){return new Promise((resolve,reject)=>{const fr=new FileReader(); fr.onload=e=>{const img=new Image(); img.onload=()=>{const max=480; let w=img.width,h=img.height; if(w>h&&w>max){h=Math.round(h*max/w); w=max}else if(h>=w&&h>max){w=Math.round(w*max/h); h=max} const cv=document.getElementById('cv'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); resolve(cv.toDataURL('image/jpeg',0.58))}; img.onerror=reject; img.src=e.target.result}; fr.onerror=reject; fr.readAsDataURL(file)})}
+
+// MEMORI OPTIMIZED: Kompresi foto diturunkan ke ukuran thumbnail wajar (250px) agar LocalStorage tidak cepat penuh
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const fr=new FileReader();
+    fr.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=250;
+        let w=img.width,h=img.height;
+        if(w>h&&w>max){h=Math.round(h*max/w); w=max}
+        else if(h>=w&&h>max){w=Math.round(w*max/h); h=max}
+        const cv=document.getElementById('cv');
+        cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(cv.toDataURL('image/jpeg',0.5));
+      };
+      img.onerror=reject;
+      img.src=e.target.result;
+    };
+    fr.onerror=reject;
+    fr.readAsDataURL(file);
+  });
+}
 async function handlePhotoInput(ev){const f=ev.target.files[0]; if(!f) return; currentPhoto=await compressImage(f); previewPhoto(currentPhoto); ev.target.value=''}
 document.getElementById('fotoCamera').addEventListener('change',handlePhotoInput); document.getElementById('fotoGallery').addEventListener('change',handlePhotoInput);
 
@@ -447,7 +488,7 @@ function openDetail(id){currentId=id; const p=rows.find(x=>x.id===id); if(!p) re
 async function payDebt(){try{const p=rows.find(x=>x.id===currentId); if(!p) return; const amount=Number(document.getElementById('payAmount').value||0); if(amount<=0) return toast('Nominal tidak valid'); p.trx.push({id:uid(),type:'pay',item:'-',amount,ts:Date.now()}); await persist('Pembayaran/Setoran disimpan'); openDetail(currentId)}catch(err){console.error(err); toast('Gagal menyimpan')}}
 
 // ==========================================
-// KASIR CEPAT (HEADER INLINE DI SAMPING NAMA)
+// KASIR CEPAT & PENAMBAHAN CATATAN
 // ==========================================
 function startQuickLoan(id){
   const p = rows.find(x=>x.id===id);
@@ -594,7 +635,27 @@ async function saveLoanFinal(){
   }
 }
 
-async function removePerson(id){try{if(!confirm('Hapus data ini?')) return; rows=rows.filter(x=>x.id!==id); await persist('Data dihapus'); closeModal('mDetail')}catch(err){console.error(err); toast('Gagal menyimpan')}}
+// KEAMANAN HAPUS: Pengecekan sisa utang sebelum menghapus profil anak
+async function removePerson(id){
+  try{
+    const p = rows.find(x => x.id === id);
+    if(p){
+      const d = sumDebt(p);
+      if(d > 0){
+        if(!confirm('PERINGATAN: Data anak ini masih ada tagihan ' + rp(d) + '! Yakin ingin tetap menghapus?')) return;
+      } else {
+        if(!confirm('Hapus data ini?')) return;
+      }
+    }
+    rows = rows.filter(x => x.id !== id);
+    await persist('Data dihapus');
+    closeModal('mDetail');
+  }catch(err){
+    console.error(err);
+    toast('Gagal menyimpan');
+  }
+}
+
 function buildSummaryText(){const total=rows.reduce((s,x)=>s+Math.max(0,sumDebt(x)),0); const unpaid=rows.filter(x=>sumDebt(x)>0).length; return `Catatan Warung by MZW Digital\n${settings.shopName||'Warung ZZ'}\n\nTotal anak: ${rows.length}\nBelum lunas: ${unpaid}\nAktivitas hari ini: ${transactionsToday()}\nTotal piutang: ${rp(total)}`}
 function shareSummary(){const txt=buildSummaryText(); if(navigator.share){navigator.share({title:'Catatan Warung',text:txt}).catch(()=>{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')})} else {window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')} }
 function downloadBackup(){const data={settings,security,items:rows,catalog,meta:{app:'CatatanWarung by MZW Digital',version:13,updatedAt:Date.now()}}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catatan-warung-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Backup JSON dibuat')}
